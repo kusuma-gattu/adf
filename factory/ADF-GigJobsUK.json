@@ -1,0 +1,9 @@
+{
+	"name": "ADF-GigJobsUK",
+	"location": "uksouth",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "d4c5538c-293e-43a0-a99c-525658e23f9c",
+		"tenantId": "281908fb-22f1-4e7a-a08b-42b2f6429759"
+	}
+}
