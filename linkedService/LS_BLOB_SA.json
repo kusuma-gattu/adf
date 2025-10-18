@@ -1,0 +1,19 @@
+{
+	"name": "LS_BLOB_SA",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"parameters": {
+			"storageAccountName": {
+				"type": "string"
+			},
+			"key": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "AzureBlobStorage",
+		"typeProperties": {
+			"connectionString": "DefaultEndpointsProtocol=https;AccountName=@{linkedService().storageAccountName};AccountKey=@linkedService().key;"
+		}
+	}
+}
