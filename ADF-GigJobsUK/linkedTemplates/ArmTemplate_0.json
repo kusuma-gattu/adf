@@ -185,7 +185,8 @@
 								}
 							},
 							"fieldList": [
-								"childItems"
+								"childItems",
+								"size"
 							],
 							"storeSettings": {
 								"type": "AzureBlobStorageReadSettings",
@@ -217,8 +218,8 @@
 							"batchCount": 4,
 							"activities": [
 								{
-									"name": "Copy data from source to target blob",
-									"type": "Copy",
+									"name": "Get File Size",
+									"type": "GetMetadata",
 									"dependsOn": [],
 									"policy": {
 										"timeout": "0.12:00:00",
@@ -229,40 +230,7 @@
 									},
 									"userProperties": [],
 									"typeProperties": {
-										"source": {
-											"type": "DelimitedTextSource",
-											"storeSettings": {
-												"type": "AzureBlobStorageReadSettings",
-												"recursive": true,
-												"enablePartitionDiscovery": false
-											},
-											"formatSettings": {
-												"type": "DelimitedTextReadSettings"
-											}
-										},
-										"sink": {
-											"type": "DelimitedTextSink",
-											"storeSettings": {
-												"type": "AzureBlobStorageWriteSettings"
-											},
-											"formatSettings": {
-												"type": "DelimitedTextWriteSettings",
-												"quoteAllText": true,
-												"fileExtension": ".txt"
-											}
-										},
-										"enableStaging": false,
-										"translator": {
-											"type": "TabularTranslator",
-											"typeConversion": true,
-											"typeConversionSettings": {
-												"allowDataTruncation": true,
-												"treatBooleanAsNumber": false
-											}
-										}
-									},
-									"inputs": [
-										{
+										"dataset": {
 											"referenceName": "DA_Blob_dev_csv",
 											"type": "DatasetReference",
 											"parameters": {
@@ -273,22 +241,190 @@
 													"type": "Expression"
 												}
 											}
+										},
+										"fieldList": [
+											"size"
+										],
+										"storeSettings": {
+											"type": "AzureBlobStorageReadSettings",
+											"recursive": true,
+											"enablePartitionDiscovery": false
+										},
+										"formatSettings": {
+											"type": "DelimitedTextReadSettings"
+										}
+									}
+								},
+								{
+									"name": "If Condition1",
+									"type": "IfCondition",
+									"dependsOn": [
+										{
+											"activity": "Get File Size",
+											"dependencyConditions": [
+												"Succeeded"
+											]
 										}
 									],
-									"outputs": [
-										{
-											"referenceName": "DA_Blob_dev_csv",
-											"type": "DatasetReference",
-											"parameters": {
-												"container": "target",
-												"directory": " ",
-												"filename": {
-													"value": "@item().name",
-													"type": "Expression"
-												}
+									"userProperties": [],
+									"typeProperties": {
+										"expression": {
+											"value": "@greater(activity('Get File Size').output.size, 999999 )",
+											"type": "Expression"
+										},
+										"ifFalseActivities": [
+											{
+												"name": "Copy Small data from source to target blob_copy1",
+												"type": "Copy",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "DelimitedTextSource",
+														"storeSettings": {
+															"type": "AzureBlobStorageReadSettings",
+															"recursive": true,
+															"enablePartitionDiscovery": false
+														},
+														"formatSettings": {
+															"type": "DelimitedTextReadSettings"
+														}
+													},
+													"sink": {
+														"type": "DelimitedTextSink",
+														"storeSettings": {
+															"type": "AzureBlobStorageWriteSettings"
+														},
+														"formatSettings": {
+															"type": "DelimitedTextWriteSettings",
+															"quoteAllText": true,
+															"fileExtension": ".txt"
+														}
+													},
+													"enableStaging": false,
+													"translator": {
+														"type": "TabularTranslator",
+														"typeConversion": true,
+														"typeConversionSettings": {
+															"allowDataTruncation": true,
+															"treatBooleanAsNumber": false
+														}
+													}
+												},
+												"inputs": [
+													{
+														"referenceName": "DA_Blob_dev_csv",
+														"type": "DatasetReference",
+														"parameters": {
+															"container": "source",
+															"directory": " ",
+															"filename": {
+																"value": "@item().name",
+																"type": "Expression"
+															}
+														}
+													}
+												],
+												"outputs": [
+													{
+														"referenceName": "DA_Blob_dev_csv",
+														"type": "DatasetReference",
+														"parameters": {
+															"container": "target",
+															"directory": " small",
+															"filename": {
+																"value": "@item().name",
+																"type": "Expression"
+															}
+														}
+													}
+												]
 											}
-										}
-									]
+										],
+										"ifTrueActivities": [
+											{
+												"name": "Copy Large data from source to target blob_copy1",
+												"type": "Copy",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "DelimitedTextSource",
+														"storeSettings": {
+															"type": "AzureBlobStorageReadSettings",
+															"recursive": true,
+															"enablePartitionDiscovery": false
+														},
+														"formatSettings": {
+															"type": "DelimitedTextReadSettings"
+														}
+													},
+													"sink": {
+														"type": "DelimitedTextSink",
+														"storeSettings": {
+															"type": "AzureBlobStorageWriteSettings"
+														},
+														"formatSettings": {
+															"type": "DelimitedTextWriteSettings",
+															"quoteAllText": true,
+															"fileExtension": ".txt"
+														}
+													},
+													"enableStaging": false,
+													"translator": {
+														"type": "TabularTranslator",
+														"typeConversion": true,
+														"typeConversionSettings": {
+															"allowDataTruncation": true,
+															"treatBooleanAsNumber": false
+														}
+													}
+												},
+												"inputs": [
+													{
+														"referenceName": "DA_Blob_dev_csv",
+														"type": "DatasetReference",
+														"parameters": {
+															"container": "source",
+															"directory": " ",
+															"filename": {
+																"value": "@item().name",
+																"type": "Expression"
+															}
+														}
+													}
+												],
+												"outputs": [
+													{
+														"referenceName": "DA_Blob_dev_csv",
+														"type": "DatasetReference",
+														"parameters": {
+															"container": "target",
+															"directory": " large",
+															"filename": {
+																"value": "@item().name",
+																"type": "Expression"
+															}
+														}
+													}
+												]
+											}
+										]
+									}
 								}
 							]
 						}
