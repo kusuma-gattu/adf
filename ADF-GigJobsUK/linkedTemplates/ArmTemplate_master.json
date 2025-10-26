@@ -7,6 +7,10 @@
 			"metadata": "Data Factory name",
 			"defaultValue": "ADF-GigJobsUK"
 		},
+		"LS_Azure_SQL_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'LS_Azure_SQL'"
+		},
 		"LS_BLOB_SA_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'LS_BLOB_SA'"
@@ -14,6 +18,18 @@
 		"LS_Blob_dev_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'LS_Blob_dev'"
+		},
+		"LS_Azure_SQL_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "gig-dwh.database.windows.net"
+		},
+		"LS_Azure_SQL_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "GigDB"
+		},
+		"LS_Azure_SQL_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "dbadmin"
 		},
 		"containerUri": {
 			"type": "string",
@@ -42,11 +58,23 @@
 					"factoryName": {
 						"value": "[parameters('factoryName')]"
 					},
+					"LS_Azure_SQL_password": {
+						"value": "[parameters('LS_Azure_SQL_password')]"
+					},
 					"LS_BLOB_SA_connectionString": {
 						"value": "[parameters('LS_BLOB_SA_connectionString')]"
 					},
 					"LS_Blob_dev_connectionString": {
 						"value": "[parameters('LS_Blob_dev_connectionString')]"
+					},
+					"LS_Azure_SQL_properties_typeProperties_server": {
+						"value": "[parameters('LS_Azure_SQL_properties_typeProperties_server')]"
+					},
+					"LS_Azure_SQL_properties_typeProperties_database": {
+						"value": "[parameters('LS_Azure_SQL_properties_typeProperties_database')]"
+					},
+					"LS_Azure_SQL_properties_typeProperties_userName": {
+						"value": "[parameters('LS_Azure_SQL_properties_typeProperties_userName')]"
 					}
 				}
 			},
