@@ -1,0 +1,161 @@
+{
+	"name": "PL_Blob_Azure_Sql",
+	"properties": {
+		"description": "This metadata-driven pipeline will copy data from the blob to Azure SQL using a configuration table.",
+		"activities": [
+			{
+				"name": "Lookup control table data",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "DA_Blob_dev_csv",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "config",
+							"directory": "metadata",
+							"filename": " "
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "Filter active",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "Lookup control table data",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup control table data').output.value",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(equals(int(item().is_active), 1), equals(item().sink_schema, 'sales'))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Filter active",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Filter active').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Copy sales to salesDB",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "DelimitedTextSource",
+									"storeSettings": {
+										"type": "AzureBlobStorageReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "DelimitedTextReadSettings"
+									}
+								},
+								"sink": {
+									"type": "AzureSqlSink",
+									"writeBehavior": "insert",
+									"sqlWriterUseTableLock": false,
+									"tableOption": "autoCreate",
+									"disableMetricsCollection": false
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "DA_Blob_dev_csv",
+									"type": "DatasetReference",
+									"parameters": {
+										"container": "source",
+										"directory": "salesdata",
+										"filename": {
+											"value": "@item().source_file_name",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DS_Azure_SQL",
+									"type": "DatasetReference",
+									"parameters": {
+										"schema": {
+											"value": "@item().sink_schema",
+											"type": "Expression"
+										},
+										"table": {
+											"value": "@item().sink_table",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"annotations": []
+	}
+}
