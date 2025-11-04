@@ -95,7 +95,7 @@
 								"source": {
 									"type": "AzureSqlSource",
 									"sqlReaderQuery": {
-										"value": "select * from @{item().source_schema}.@{item().source_table} where @{item().watermark_column} <= '@{item().last_updated}'",
+										"value": "select * from @{item().source_schema}.@{item().source_table} where @{item().watermark_column} > '@{item().last_updated}'",
 										"type": "Expression"
 									},
 									"queryTimeout": "02:00:00",
@@ -150,6 +150,56 @@
 									}
 								}
 							]
+						},
+						{
+							"name": "update config",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "Copy data1",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[dbo].[sp_updateConfig]",
+								"storedProcedureParameters": {
+									"sink_schema": {
+										"value": {
+											"value": "@item().sink_schema",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"sink_table": {
+										"value": {
+											"value": "@item().sink_table",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"waterkmark_column": {
+										"value": {
+											"value": "@item().watermark_column",
+											"type": "Expression"
+										},
+										"type": "String"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "LS_Azure_SQL",
+								"type": "LinkedServiceReference"
+							}
 						}
 					]
 				}
