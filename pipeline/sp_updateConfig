@@ -1,0 +1,23 @@
+create or alter proc sp_updateConfig 
+	@sink_schema nvarchar(64) -- these inputs we will be coming from pipeline
+	, @sink_table nvarchar(64)
+	, @waterkmark_column nvarchar(64)
+AS
+Begin
+	Declare @sql nvarchar(max);
+	Declare @paraDef nvarchar(max);
+	Declare @maxDate nvarchar(64);
+	Declare @maxDate_out nvarchar(64)
+	-- this will get max date value of watermark column of sink table after copy.
+	SET @sql = N'select @maxDate_out= max(' + QUOTENAME(@waterkmark_column) + N') from ' + QUOTENAME(@sink_schema)+'.'+QUOTENAME(@sink_table);
+	SET @paraDef = N'@maxDate_out nvarchar(64) OUTPUT'
+
+	EXEC sp_executesql @sql, @paraDef, @maxDate_out = @maxDate OUTPUT
+
+	--PRINT @maxDate, @maxDate_out  
+	-- once new data copied into target table, we are updating last updated column of metadata table with max date of the watermark column of sink table.
+	UPDATE [config].[metadata]
+	SET last_updated = @maxDate
+	WHERE sink_schema = @sink_schema and sink_table = @sink_table and watermark_column = @waterkmark_column;
+
+End;
